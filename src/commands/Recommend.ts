@@ -6,7 +6,12 @@ export default class RecommendCommand extends Command {
 	spotifyClient: SpotifyClient;
 	constructor() {
 		super("recommend", {
-			aliases: ["recommend"],
+			aliases: ["recommend", "suggest"],
+			description: {
+				content:
+					"Uses Spotify's recommend songs endpoint to generate recommended songs based on user-inputted songs.",
+				usage: "t![recommend|suggest] <songs...>",
+			},
 			separator: ",",
 			args: [
 				{
@@ -20,6 +25,12 @@ export default class RecommendCommand extends Command {
 	}
 
 	async exec(message: Message, args: any) {
+		if (!args.input) {
+			return message.channel.send(
+				`:x: No songs provided! \`${this.description.usage}\``
+			);
+		}
+
 		let ids: string[] = [];
 		for (const input of args.input) {
 			const search = await this.spotifyClient.searchForSong(input);
@@ -38,11 +49,12 @@ export default class RecommendCommand extends Command {
 		const recommendationsResponse = await this.spotifyClient.getRecommendations(
 			ids
 		);
-		let recommendations: string[] = [];
+		let recommendations: object[] = [];
 		for (const recommendation of recommendationsResponse.tracks) {
-			recommendations.push(
-				`${recommendation.name} - ${getArtists(recommendation.artists)}`
-			);
+			recommendations.push({
+				name: `${recommendation.name} - ${getArtists(recommendation.artists)}`,
+				url: recommendation.external_urls.spotify,
+			});
 		}
 
 		const embed = new MessageEmbed()
@@ -68,8 +80,8 @@ function getArtists(input: any[]) {
 
 function turnArrayIntoList(input: any[]) {
 	let list: string = "";
-	for (let i = 0; i < input.length; i++) {
-		list += `\`${i + 1}.\` ${input[i]}\n`;
+	for (let i = 0; i < 15; i++) {
+		list += `\`${i + 1}.\` [${input[i].name}](${input[i].url})\n`;
 	}
 
 	return list;

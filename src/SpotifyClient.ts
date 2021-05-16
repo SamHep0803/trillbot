@@ -9,14 +9,27 @@ export default class SpotifyClient {
 			clientSecret: process.env.CLIENT_SECRET,
 		});
 
+		let expireTime: number = 3600;
 		this.spotifyApi
 			.clientCredentialsGrant()
 			.then((data) => {
 				this.spotifyApi.setAccessToken(data.body["access_token"]);
+				expireTime = data.body["expires_in"];
 			})
 			.catch((err) => {
 				console.log(err);
 			});
+
+		setInterval(() => {
+			this.spotifyApi
+				.clientCredentialsGrant()
+				.then((data) => {
+					this.spotifyApi.setAccessToken(data.body["access_token"]);
+				})
+				.catch((err) => {
+					console.log(err);
+				});
+		}, expireTime * 1000);
 	}
 
 	async getRecommendations(value: any[]) {

@@ -6,7 +6,12 @@ export default class SearchCommand extends Command {
 	spotifyClient: SpotifyClient;
 	constructor() {
 		super("search", {
-			aliases: ["search"],
+			aliases: ["search", "lookup", "query"],
+			description: {
+				content:
+					"Gets the first result from the search endpoint of Spotify's API.",
+				usage: "t![search|lookup|query] <song-name>",
+			},
 			args: [
 				{
 					id: "input",
@@ -19,6 +24,12 @@ export default class SearchCommand extends Command {
 	}
 
 	async exec(message: Message, args: any) {
+		if (!args.input) {
+			return message.channel.send(
+				`:x: No songs provided! \`${this.description.usage}\``
+			);
+		}
+
 		const search = await this.spotifyClient.searchForSong(args.input);
 
 		if (!search.tracks) {
@@ -36,7 +47,11 @@ export default class SearchCommand extends Command {
 				song.artists
 			)}\n` +
 			`Album: ${song.album.name}\n` +
-			`Preview: [click here!](${song.preview_url})\n` +
+			`Preview: ${
+				song.preview_url
+					? `[click here!](${song.preview_url})`
+					: "not available"
+			}\n` +
 			`Duration: ${millisToMinutesAndSeconds(song.duration_ms)}`;
 
 		const embed = new MessageEmbed()
